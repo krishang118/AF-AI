@@ -1,0 +1,17 @@
+
+FORECAST VALIDATION NOTES - 2025
+
+HISTORICAL CONTEXT:
+- 2010-2015: bootstrapping phase. High churn, low efficiency.
+- 2016-2019: Series A growth. Sales headcount expansion.
+- 2020: Covid stagnated new logos but retention held strong.
+- 2021-2024: Scale-up phase. Margins improved via hosting optimization.
+
+KEY DRIVERS FOR 2026+:
+1. Headcount Efficiency: Engineering leverage is kicking in. R&D % of rev should drop.
+2. Services Attach: We are pushing services revenue up to 25% of mix.
+3. Churn: Best-in-class at <6%. Maintain this.
+
+RISKS:
+- Competitor A is aggressive on price (check Price/Volume variance).
+- Tech debt from 2016 era might increase Hosting Costs.
