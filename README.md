@@ -1,4 +1,4 @@
-# BNC Assumption-Driven Forecasting AI System (AF-AI)
+# BCN Assumption-Driven Forecasting AI System (AF-AI)
 
 An AI forecasting system that combines deterministic modeling with intelligent analysis; auto-detects data frequencies (daily/weekly/monthly/quarterly/yearly), allows setting up confidence-based scenarios (±5-20%), modeling discrete events, and provides AI-powered strategic insights through Groq or Ollama, all with complete transparency into every calculation.
 
