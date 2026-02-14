@@ -292,6 +292,44 @@ st.markdown("""
         border-color: rgba(255,255,255,0.8) !important;
         box-shadow: 0 0 10px rgba(255,255,255,0.1) !important;
     }
+    
+    /* FIX MULTISELECT WHITE BACKGROUNDS - Streamlit Specific */
+    .stMultiSelect [data-baseweb="select"] {
+        background-color: rgb(38, 39, 48) !important;
+    }
+    
+    .stMultiSelect [data-baseweb="select"] > div {
+        background-color: rgb(38, 39, 48) !important;
+    }
+    
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: rgb(49, 51, 63) !important;
+        color: white !important;
+    }
+    
+    .stMultiSelect span[data-baseweb="tag"] {
+        background-color: rgb(49, 51, 63) !important;
+        color: white !important;
+    }
+    
+    /* Dropdown menu */
+    .stMultiSelect div[data-baseweb="popover"] {
+        background-color: rgb(38, 39, 48) !important;
+    }
+    
+    .stMultiSelect ul[role="listbox"] {
+        background-color: rgb(38, 39, 48) !important;
+    }
+    
+    .stMultiSelect ul[role="listbox"] li {
+        background-color: rgb(38, 39, 48) !important;
+        color: white !important;
+    }
+    
+    .stMultiSelect ul[role="listbox"] li:hover {
+        background-color: rgb(49, 51, 63) !important;
+    }
+
 
     /* BROWSER VALIDATION KILLER (The final boss) */
     input:invalid,
@@ -546,23 +584,44 @@ def main():
                     st.caption("Run: `ollama serve`")
                     
         else:
-            # Groq Configuration
-            st.session_state.ai_model = "openai/gpt-oss-20b"
-            st.info(f"Model: {st.session_state.ai_model}")
+            # Cloud API Configuration (Groq or OpenAI)
+            cloud_provider = st.radio("Cloud Provider", ["Groq", "OpenAI"], horizontal=True)
             
-            # API Key Input
-            api_key = st.text_input(
-                "Groq API Key",
-                type="password",
-                value=st.session_state.groq_api_key if st.session_state.groq_api_key else "",
-                help="Enter your Groq API key (not saved to disk)"
-            )
-            
-            if api_key:
-                st.session_state.groq_api_key = api_key
-                st.success("API Key Set")
-            else:
-                st.warning("API Key Required")
+            if cloud_provider == "Groq":
+                st.session_state.ai_model = "openai/gpt-oss-20b"
+                st.info(f"Model: {st.session_state.ai_model}")
+                
+                # API Key Input
+                api_key = st.text_input(
+                    "Groq API Key",
+                    type="password",
+                    value=st.session_state.groq_api_key if st.session_state.groq_api_key else "",
+                    help="Enter your Groq API key (not saved to disk)"
+                )
+                
+                if api_key:
+                    st.session_state.groq_api_key = api_key
+                    st.success("Groq API Key Set")
+                else:
+                    st.warning("API Key Required")
+            else:  # OpenAI
+                st.session_state.ai_model = "gpt-4o-mini"
+                st.info(f"Model: GPT-4o Mini")
+                
+                # API Key Input
+                api_key = st.text_input(
+                    "OpenAI API Key",
+                    type="password",
+                    value=st.session_state.get('openai_api_key', ''),
+                    help="Enter your OpenAI API key from platform.openai.com"
+                )
+                
+                if api_key:
+                    st.session_state.openai_api_key = api_key
+                    st.success("OpenAI API Key Set")
+                else:
+                    st.warning("API Key Required")
+    
     
     # Route to selected page
     if page == "Data Upload":

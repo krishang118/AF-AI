@@ -17,12 +17,16 @@ MODELS = {
     },
     "groq": {
         "openai/gpt-oss-20b": {"display": "openai/gpt-oss-20B (Groq)", "fast": True}
+    },
+    "openai": {
+        "gpt-4o-mini": {"display": "GPT-4o Mini (OpenAI)", "fast": True},
+        "gpt-4o": {"display": "GPT-4o (OpenAI)", "advanced": True}
     }
 }
 
 
 class LLMHelper:
-    """Interface to LLM providers (Ollama local or Groq API)"""
+    """Interface to LLM providers (Ollama local, Groq API, or OpenAI API)"""
     
     def __init__(self, provider: str = "ollama", model: str = "llama3:latest", 
                  api_key: Optional[str] = None, base_url: str = "http://localhost:11434"):
@@ -30,9 +34,9 @@ class LLMHelper:
         Initialize LLM helper with specified provider and model
         
         Args:
-            provider: "ollama" or "groq"
-            model: Model name (llama3:latest, deepseek-r1:7b, or openai/gpt-oss-20b)
-            api_key: Groq API key (required if provider is groq)
+            provider: "ollama", "groq", or "openai"
+            model: Model name (llama3:latest, deepseek-r1:7b, openai/gpt-oss-20b, gpt-4o-mini, or gpt-4o)
+            api_key: API key (required for groq or openai provider)
             base_url: Ollama base URL (default: http://localhost:11434)
         """
         self.provider = provider
@@ -52,6 +56,17 @@ class LLMHelper:
                 raise ImportError("Groq SDK not installed. Run: pip install groq")
         else:
             self.groq_client = None
+        
+        if provider == "openai":
+            if not api_key:
+                raise ValueError("OpenAI API key required for openai provider")
+            try:
+                from openai import OpenAI
+                self.openai_client = OpenAI(api_key=api_key)
+            except ImportError:
+                raise ImportError("OpenAI SDK not installed. Run: pip install openai")
+        else:
+            self.openai_client = None
     
     def get_model_display_name(self) -> str:
         """Get human-readable model name"""
@@ -78,6 +93,26 @@ class LLMHelper:
             
         except Exception as e:
             return json.dumps({"error": f"Groq API Error: {str(e)}"})
+    
+    def _call_openai(self, prompt: str, system: str = "") -> str:
+        """Make API call to OpenAI"""
+        try:
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+            
+            response = self.openai_client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=2000
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            return json.dumps({"error": f"OpenAI API Error: {str(e)}"})
         
     def _call_ollama(self, prompt: str, system: str = "", force_json: bool = False) -> str:
         """Make API call to Ollama with optional JSON validation"""
@@ -140,7 +175,10 @@ class LLMHelper:
         if self.provider == "groq":
             # Groq doesn't support force_json directly, rely on prompt engineering
             return self._call_groq(prompt, system)
-        else:
+        elif self.provider == "openai":
+            # OpenAI doesn't support force_json directly, rely on prompt engineering
+            return self._call_openai(prompt, system)
+        else:  # ollama
             return self._call_ollama(prompt, system, force_json)
 
     

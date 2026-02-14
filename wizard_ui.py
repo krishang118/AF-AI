@@ -37,20 +37,6 @@ def data_upload_wizard():
     
     init_wizard_state()
     
-    # Custom CSS to remove red outlines from multiselect
-    st.markdown("""
-        <style>
-        /* Remove red outline from multiselect */
-        div[data-baseweb="select"] > div {
-            border-color: rgb(49, 51, 63) !important;
-        }
-        div[data-baseweb="select"] > div:focus-within {
-            border-color: rgb(49, 51, 63) !important;
-            box-shadow: none !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
     st.header("Data Preparation")
     
     # Progress indicator (4 steps now - removed Output Mode)
@@ -89,21 +75,68 @@ def step_1_upload():
     
     uploaded_files = st.file_uploader(
         "Choose files",
-        type=['xlsx', 'xls', 'csv', '  docx'],
+        type=['xlsx', 'xls', 'csv', 'docx'],
         accept_multiple_files=True,
         key="wizard_uploader"
     )
     
     if uploaded_files:
-        # Save to temp (using original names for proper sheet naming)
+        # Save to temp and split multi-sheet Excel files
         temp_paths = []
+        
         for uploaded_file in uploaded_files:
+            # Save original file first
             temp_path = Path(f"/tmp/{uploaded_file.name}")
             with open(temp_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            temp_paths.append(temp_path)
+            
+            # Check for multi-sheet Excel
+            if uploaded_file.name.endswith(('.xlsx', '.xls')):
+                try:
+                    excel_file = pd.ExcelFile(temp_path)
+                    
+                    if len(excel_file.sheet_names) > 1:
+                        # Multi-sheet detected - split into individual files
+                        st.info(f"Detected {len(excel_file.sheet_names)} sheets in **{uploaded_file.name}**. Splitting into individual files...")
+                        
+                        base_name = temp_path.stem  # filename without extension
+                        
+                        for sheet_name in excel_file.sheet_names:
+                            # Read individual sheet
+                            df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                            
+                            # Create split file path with sanitized sheet name
+                            safe_sheet_name = sheet_name.replace('/', '_').replace('\\', '_')
+                            split_path = Path(f"/tmp/{base_name}_{safe_sheet_name}.xlsx")
+                            
+                            # Save as individual Excel file
+                            df.to_excel(split_path, index=False, sheet_name=sheet_name)
+                            
+                            temp_paths.append(split_path)
+                        
+                        # Remove original multi-sheet file
+                        temp_path.unlink()
+                        
+                        # Show split files
+                        with st.expander(f"Split files from {uploaded_file.name}"):
+                            for path in temp_paths[-len(excel_file.sheet_names):]:
+                                st.caption(f"• {path.name}")
+                    else:
+                        # Single sheet - keep as-is
+                        temp_paths.append(temp_path)
+                except Exception as e:
+                    # If reading fails, keep original file
+                    st.warning(f"Could not process **{uploaded_file.name}**: {str(e)}")
+                    temp_paths.append(temp_path)
+            else:
+                # CSV or non-Excel file - keep as-is
+                temp_paths.append(temp_path)
         
         st.session_state.uploaded_temp_paths = temp_paths
+        
+        # Summary message
+        if len(temp_paths) != len(uploaded_files):
+            st.success(f"Processed {len(uploaded_files)} uploaded file(s) → {len(temp_paths)} file(s) ready for analysis")
         
         # Load files into normalizer
         with st.spinner("Loading files..."):
