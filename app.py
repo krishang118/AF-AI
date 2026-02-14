@@ -1428,10 +1428,16 @@ def chat_page():
             with st.spinner("Thinking..."):
                 try:
                     # Update LLM Helper with current settings
+                    # Get the appropriate API key based on provider
+                    if st.session_state.ai_provider == "openai":
+                        api_key = st.session_state.get('openai_api_key', '')
+                    else:  # groq or ollama
+                        api_key = st.session_state.groq_api_key
+                    
                     st.session_state.llm_helper = LLMHelper(
                         provider=st.session_state.ai_provider,
                         model=st.session_state.ai_model,
-                        api_key=st.session_state.groq_api_key
+                        api_key=api_key
                     )
                     
                     # Helper to profile dataframe
