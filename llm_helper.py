@@ -51,9 +51,14 @@ class LLMHelper:
                 raise ValueError("Groq API key required for groq provider")
             try:
                 from groq import Groq
-                self.groq_client = Groq(api_key=api_key)
-            except ImportError:
-                raise ImportError("Groq SDK not installed. Run: pip install groq")
+                import httpx
+                # Use custom httpx client to fix SSL issues on Windows
+                http_client = httpx.Client(verify=False)
+                self.groq_client = Groq(api_key=api_key, http_client=http_client)
+            except ImportError as e:
+                if "groq" in str(e):
+                    raise ImportError("Groq SDK not installed. Run: pip install groq")
+                raise ImportError("httpx not installed. Run: pip install httpx")
         else:
             self.groq_client = None
         
@@ -62,9 +67,14 @@ class LLMHelper:
                 raise ValueError("OpenAI API key required for openai provider")
             try:
                 from openai import OpenAI
-                self.openai_client = OpenAI(api_key=api_key)
-            except ImportError:
-                raise ImportError("OpenAI SDK not installed. Run: pip install openai")
+                import httpx
+                # Use custom httpx client to fix SSL issues on Windows
+                http_client = httpx.Client(verify=False)
+                self.openai_client = OpenAI(api_key=api_key, http_client=http_client)
+            except ImportError as e:
+                if "openai" in str(e):
+                    raise ImportError("OpenAI SDK not installed. Run: pip install openai")
+                raise ImportError("httpx not installed. Run: pip install httpx")
         else:
             self.openai_client = None
     
